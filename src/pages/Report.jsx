@@ -4,7 +4,7 @@ import autoTable from 'jspdf-autotable'
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, convertInchesToTwip } from 'docx'
 import { supabase } from '../lib/supabase'
 
-const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AI-A']
+const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies' }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
 const NUMERIC_FIELDS = { tenth_percent: '10th %', twelfth_percent: '12th %', cgpa: 'CGPA' }

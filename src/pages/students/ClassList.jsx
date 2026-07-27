@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
-const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AI-A']
+const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 
 export default function ClassList() {
   const [students, setStudents] = useState([])

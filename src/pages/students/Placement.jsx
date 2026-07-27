@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
-const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AI-A']
+const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies' }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
 

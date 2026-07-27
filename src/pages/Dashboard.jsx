@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { supabase } from '../lib/supabase'
 
-const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AI-A']
+const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_COLORS = { placed: '#1f7a3d', not_placed: '#b23b3b', higher_studies: '#916a0a', removed_from_placement: '#8a8d94' }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
 
