@@ -67,7 +67,7 @@ export default function Dashboard() {
       { name: 'Placed', key: 'placed', value: counts.placed },
       { name: 'Not Placed', key: 'not_placed', value: counts.not_placed },
       { name: 'Higher Studies', key: 'higher_studies', value: counts.higher_studies },
-      { name: 'Removed From Placement', key: 'removed_from_placement', value: counts.removed_from_placement },
+      { name: 'Entrepreneurship', key: 'removed_from_placement', value: counts.removed_from_placement },
     ].filter((d) => d.value > 0)
   }, [scopedStudents])
 

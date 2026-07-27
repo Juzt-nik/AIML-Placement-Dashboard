@@ -5,12 +5,12 @@ import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, Width
 import { supabase } from '../lib/supabase'
 
 const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
-const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies' }
+const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
 const NUMERIC_FIELDS = { tenth_percent: '10th %', twelfth_percent: '12th %', cgpa: 'CGPA' }
 const OPERATORS = { gte: '\u2265', lte: '\u2264', eq: '=' }
 const SORT_FIELDS = { name: 'Name', register_number: 'Register No', category: 'Class', tenth_percent: '10th %', twelfth_percent: '12th %', cgpa: 'CGPA' }
-const CATEGORY_LABELS = { all: 'All', placement: 'Placement', higher_studies: 'Higher Studies', others: 'Others' }
+const CATEGORY_LABELS = { all: 'All', placement: 'Placement', higher_studies: 'Higher Studies', others: 'Entrepreneurship' }
 
 function matchesCategory(status, category) {
   if (category === 'all') return true
@@ -18,6 +18,12 @@ function matchesCategory(status, category) {
   if (category === 'higher_studies') return status === 'higher_studies'
   if (category === 'others') return status === 'removed_from_placement'
   return true
+}
+
+function formatOfferType(offer) {
+  if (!offer || !offer.offer_type) return null
+  const label = OFFER_TYPE_LABELS[offer.offer_type]
+  return offer.role === 'Internship' ? `Intern/${label}` : label
 }
 
 // Loads the college logo from /public/cllglogo.png (if present) as both a
@@ -167,7 +173,7 @@ export default function Report() {
       return {
         ...s,
         companyName: offer ? companyMap[offer.company_id] : null,
-        offerType: offer ? OFFER_TYPE_LABELS[offer.offer_type] : null,
+        offerType: offer ? formatOfferType(offer) : null,
         mentorName: mentorMap[s.mentor_id] || null,
       }
     })
@@ -200,7 +206,7 @@ export default function Report() {
       r.name,
       'AIML',
       r.category || '\u2014',
-      r.placement_status === 'higher_studies' ? 'Higher Studies' : r.placement_status === 'removed_from_placement' ? 'Others' : 'Placement',
+      r.placement_status === 'higher_studies' ? 'Higher Studies' : r.placement_status === 'removed_from_placement' ? 'Entrepreneurship' : 'Placement',
       STATUS_LABELS[r.placement_status],
       r.tenth_percent ?? '\u2014',
       r.twelfth_percent ?? '\u2014',
@@ -347,7 +353,7 @@ export default function Report() {
                 <th>Total</th>
                 <th>Placed</th>
                 <th>Higher Studies</th>
-                <th>Others</th>
+                <th>Entrepreneurship</th>
                 <th>Placement %</th>
                 <th>Avg. CTC (LPA)</th>
               </tr>
@@ -475,7 +481,7 @@ export default function Report() {
                     <td>{r.name}</td>
                     <td>AIML</td>
                     <td>{r.category || '\u2014'}</td>
-                    <td>{r.placement_status === 'higher_studies' ? 'Higher Studies' : r.placement_status === 'removed_from_placement' ? 'Others' : 'Placement'}</td>
+                    <td>{r.placement_status === 'higher_studies' ? 'Higher Studies' : r.placement_status === 'removed_from_placement' ? 'Entrepreneurship' : 'Placement'}</td>
                     <td><span className={`badge badge--${r.placement_status}`}>{STATUS_LABELS[r.placement_status]}</span></td>
                     <td>{r.tenth_percent ?? '\u2014'}</td>
                     <td>{r.twelfth_percent ?? '\u2014'}</td>

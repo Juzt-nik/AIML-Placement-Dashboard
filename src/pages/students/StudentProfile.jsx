@@ -5,13 +5,20 @@ import { useAuth } from '../../lib/AuthContext'
 
 const STATUS_LABELS = {
   placed: 'Placed', not_placed: 'Not Placed',
-  removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies',
+  removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies',
 }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
 const REQUEST_STATUS_BADGE = { pending: 'not_placed', approved: 'placed', rejected: 'removed_from_placement' }
 
-const emptyOfferForm = { companyId: '', newCompany: '', role: '', ctc: '', offerType: 'dream', offerDate: '', isAccepted: true }
-const emptyRequestForm = { company: '', role: '', ctc: '', offerType: 'dream', offerDate: '' }
+const emptyOfferForm = { companyId: '', newCompany: '', role: 'Direct Offer', ctc: '', offerType: 'dream', offerDate: '', isAccepted: true }
+const emptyRequestForm = { company: '', role: 'Direct Offer', ctc: '', offerType: 'dream', offerDate: '' }
+
+// shows "Intern/Dream" style label when the offer is an internship, plain label otherwise
+function formatOfferType(offer) {
+  if (!offer || !offer.offer_type) return null
+  const label = OFFER_TYPE_LABELS[offer.offer_type]
+  return offer.role === 'Internship' ? `Intern/${label}` : label
+}
 
 export default function StudentProfile() {
   const { className, studentId } = useParams()
@@ -417,7 +424,7 @@ export default function StudentProfile() {
                     <td>{companyMap[o.company_id] || '\u2014'}</td>
                     <td>{o.role || '\u2014'}</td>
                     <td>{Number(o.ctc).toFixed(2)}</td>
-                    <td>{o.offer_type ? OFFER_TYPE_LABELS[o.offer_type] : '\u2014'}</td>
+                    <td>{o.offer_type ? formatOfferType(o) : '\u2014'}</td>
                     <td>{o.offer_date || '\u2014'}</td>
                     <td>{o.is_accepted ? 'Yes' : 'No'}</td>
                     {isCoordinator && <td><button className="link-btn" onClick={() => deleteOffer(o.id)}>Remove</button></td>}
@@ -457,7 +464,10 @@ export default function StudentProfile() {
                 </div>
                 <div>
                   <label>Role</label>
-                  <input type="text" value={offerForm.role} onChange={(e) => setOfferForm({ ...offerForm, role: e.target.value })} />
+                  <select value={offerForm.role} onChange={(e) => setOfferForm({ ...offerForm, role: e.target.value })}>
+                    <option value="Direct Offer">Direct Offer</option>
+                    <option value="Internship">Internship</option>
+                  </select>
                 </div>
                 <div>
                   <label>CTC (LPA)</label>
@@ -507,7 +517,10 @@ export default function StudentProfile() {
                   </div>
                   <div>
                     <label>Role</label>
-                    <input type="text" value={requestForm.role} onChange={(e) => setRequestForm({ ...requestForm, role: e.target.value })} />
+                    <select value={requestForm.role} onChange={(e) => setRequestForm({ ...requestForm, role: e.target.value })}>
+                      <option value="Direct Offer">Direct Offer</option>
+                      <option value="Internship">Internship</option>
+                    </select>
                   </div>
                   <div>
                     <label>CTC (LPA)</label>

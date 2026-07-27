@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
 const CHANGE_TYPE_LABELS = { mark_placed: 'Mark Placed', update_details: 'Update Details' }
-const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies' }
+const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
 
 export default function Requests() {
   const { profile } = useAuth()

@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabase'
 
 const STATUS_LABELS = {
   placed: 'Placed', not_placed: 'Not Placed',
-  removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies',
+  removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies',
 }
 
 export default function ClassRoster() {

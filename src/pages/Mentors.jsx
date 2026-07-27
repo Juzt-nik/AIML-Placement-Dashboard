@@ -1,8 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
-const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Removed From Placement', higher_studies: 'Higher Studies' }
+const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
+
+function formatOfferType(offer) {
+  if (!offer || !offer.offer_type) return null
+  const label = OFFER_TYPE_LABELS[offer.offer_type]
+  return offer.role === 'Internship' ? `Intern/${label}` : label
+}
 
 export default function Mentors() {
   const [mentors, setMentors] = useState([])
@@ -186,7 +192,7 @@ export default function Mentors() {
                 <tbody>
                   {scoped.mentees.map((s, i) => {
                     const studentOffers = offersByStudent[s.id] || []
-                    const primaryType = studentOffers.find((o) => o.is_accepted)?.offer_type
+                    const primaryOffer = studentOffers.find((o) => o.is_accepted)
                     return (
                       <tr key={s.id}>
                         <td>{i + 1}</td>
@@ -194,7 +200,7 @@ export default function Mentors() {
                         <td>{s.name}</td>
                         <td>{s.category}</td>
                         <td><span className={`badge badge--${s.placement_status}`}>{STATUS_LABELS[s.placement_status]}</span></td>
-                        <td>{primaryType ? OFFER_TYPE_LABELS[primaryType] : '\u2014'}</td>
+                        <td>{primaryOffer ? formatOfferType(primaryOffer) : '\u2014'}</td>
                         {[0, 1, 2].map((idx) => (
                           <td key={idx}>{studentOffers[idx] ? `${companyMap[studentOffers[idx].company_id] || '\u2014'} (\u20b9${Number(studentOffers[idx].ctc).toFixed(1)})` : '\u2014'}</td>
                         ))}
