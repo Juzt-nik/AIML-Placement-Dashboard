@@ -634,28 +634,6 @@ button { font-family: var(--sans); cursor: pointer; }
   margin-top: 2px;
 }
 
-.profile-facts {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  border-top: 1px solid var(--border);
-}
-
-.profile-fact {
-  padding: 14px 20px;
-  border-right: 1px solid var(--border);
-}
-
-.profile-fact:last-child { border-right: none; }
-
-.profile-fact span {
-  display: block;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-
 .profile-fact b {
   font-size: 15px;
   color: var(--navy-text);
@@ -679,6 +657,37 @@ button { font-family: var(--sans); cursor: pointer; }
   box-shadow: var(--shadow-md);
   padding: 36px 32px;
   width: 360px;
+}
+
+@media (min-width: 761px) {
+  .login-card {
+    width: 460px;
+    padding: 48px 46px;
+    border-radius: 18px;
+  }
+
+  .login-card .letterhead__logo {
+    height: 68px;
+    margin-bottom: 22px !important;
+  }
+
+  .login-card .letterhead__eyebrow { font-size: 14px; }
+
+  .login-card__title { font-size: 24px !important; }
+
+  .login-card label { font-size: 13.5px !important; margin-bottom: 6px !important; }
+
+  .login-card input {
+    padding: 12px 14px !important;
+    font-size: 15px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .login-card button[type="submit"] {
+    padding: 14px 0 !important;
+    font-size: 15px !important;
+    border-radius: 10px !important;
+  }
 }
 
 /* ===== Sub-tab bar (Student Details / Placement) ===== */
@@ -786,9 +795,10 @@ button { font-family: var(--sans); cursor: pointer; }
 
 .profile-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
-  padding: 0 20px 20px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 18px 24px;
+  padding: 18px 20px 22px;
+  border-top: 1px solid var(--border);
 }
 
 .profile-fact span {
@@ -803,6 +813,7 @@ button { font-family: var(--sans); cursor: pointer; }
 .profile-fact b {
   font-size: 15px;
   color: var(--navy-text);
+  line-height: 1.35;
 }
 
 /* ===== Bottom nav (mobile only — hidden on desktop by default) ===== */
@@ -842,8 +853,7 @@ button { font-family: var(--sans); cursor: pointer; }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
   .panel-grid { grid-template-columns: 1fr; }
 
-  .profile-facts { grid-template-columns: repeat(2, 1fr); }
-  .profile-fact { border-right: none; border-bottom: 1px solid var(--border); }
+  .profile-facts { grid-template-columns: repeat(2, 1fr); gap: 14px 16px; }
 
   /* profile header: avatar/name wraps above the badge+edit button instead of clipping */
   .profile-header {
