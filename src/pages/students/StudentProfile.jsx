@@ -300,6 +300,12 @@ export default function StudentProfile() {
             <div className="profile-fact"><span>12th %</span><b>{student.twelfth_percent ?? '\u2014'}</b></div>
             <div className="profile-fact"><span>Mentor</span><b>{mentor?.name || '\u2014'}</b></div>
             <div className="profile-fact"><span>Batch</span><b>{student.batch_year || '\u2014'}</b></div>
+            <div className="profile-fact"><span>Backlogs</span><b>{student.backlogs ?? '\u2014'}</b></div>
+            <div className="profile-fact"><span>Gender</span><b>{student.gender || '\u2014'}</b></div>
+            <div className="profile-fact"><span>Date of Birth</span><b>{student.dob ? new Date(student.dob).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '\u2014'}</b></div>
+            <div className="profile-fact"><span>Official Email</span><b style={{ fontSize: 13, wordBreak: 'break-all' }}>{student.official_email || '\u2014'}</b></div>
+            <div className="profile-fact"><span>Personal Email</span><b style={{ fontSize: 13, wordBreak: 'break-all' }}>{student.personal_email || '\u2014'}</b></div>
+            <div className="profile-fact"><span>Mobile No.</span><b>{student.mobile_no || '\u2014'}</b></div>
           </div>
         ) : editing ? (
           <div className="panel__body edit-form">
