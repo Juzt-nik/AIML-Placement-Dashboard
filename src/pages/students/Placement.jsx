@@ -43,7 +43,7 @@ export default function Placement() {
         supabase.from('students').select('*').order('register_number'),
         supabase.from('offers').select('*'),
         supabase.from('companies').select('*'),
-        supabase.from('mentors').select('*'),
+        supabase.from('mentors').select('*').order('id'),
       ])
       if (studentsRes.error) {
         setError(studentsRes.error.message)

@@ -80,7 +80,7 @@ export default function Report() {
         supabase.from('students').select('*'),
         supabase.from('offers').select('*').eq('is_accepted', true),
         supabase.from('companies').select('*'),
-        supabase.from('mentors').select('*'),
+        supabase.from('mentors').select('*').order('id'),
       ])
       if (studentsRes.error) {
         setError(studentsRes.error.message)

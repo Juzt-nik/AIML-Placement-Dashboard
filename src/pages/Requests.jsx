@@ -23,7 +23,7 @@ export default function Requests() {
       supabase.from('change_requests').select('*').order('requested_at', { ascending: false }),
       supabase.from('students').select('*'),
       supabase.from('profiles').select('*'),
-      supabase.from('mentors').select('*'),
+      supabase.from('mentors').select('*').order('id'),
     ])
     if (reqRes.error) {
       setError(reqRes.error.message)

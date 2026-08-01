@@ -1,13 +1,51 @@
 import { useEffect, useMemo, useState } from 'react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, convertInchesToTwip } from 'docx'
 import { supabase } from '../lib/supabase'
 
+const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
 const OFFER_TYPE_LABELS = { normal: 'Normal', dream: 'Dream', super_dream: 'Super Dream', marquee: 'Marquee' }
+const CATEGORY_LABELS = { all: 'All', placement: 'Placement', higher_studies: 'Higher Studies', others: 'Entrepreneurship' }
 
 function formatOfferType(offer) {
   if (!offer || !offer.offer_type) return null
   const label = OFFER_TYPE_LABELS[offer.offer_type]
   return offer.role === 'Internship' ? `Intern/${label}` : label
+}
+
+function matchesCategory(status, category) {
+  if (category === 'all') return true
+  if (category === 'placement') return status === 'placed' || status === 'not_placed'
+  if (category === 'higher_studies') return status === 'higher_studies'
+  if (category === 'others') return status === 'removed_from_placement'
+  return true
+}
+
+// Loads the college logo from /public/cllglogo.png for use in PDF/DOCX exports.
+async function loadLogo() {
+  try {
+    const res = await fetch('/cllglogo.png')
+    if (!res.ok) return null
+    const blob = await res.blob()
+    const arrayBuffer = await blob.arrayBuffer()
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+    const dims = await new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => resolve({ width: img.width, height: img.height })
+      img.onerror = () => resolve({ width: 300, height: 100 })
+      img.src = dataUrl
+    })
+    return { dataUrl, arrayBuffer, ...dims }
+  } catch {
+    return null
+  }
 }
 
 export default function Mentors() {
@@ -19,11 +57,15 @@ export default function Mentors() {
   const [error, setError] = useState(null)
   const [selectedMentor, setSelectedMentor] = useState('all')
 
+  const [classFilter, setClassFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+
   useEffect(() => {
     async function load() {
       setLoading(true)
       const [mentorsRes, studentsRes, offersRes, companiesRes] = await Promise.all([
-        supabase.from('mentors').select('*').order('name'),
+        supabase.from('mentors').select('*').order('id'),
         supabase.from('students').select('*'),
         supabase.from('offers').select('*'),
         supabase.from('companies').select('*'),
@@ -85,6 +127,166 @@ export default function Mentors() {
     })
     return map
   }, [offers])
+
+  // filtered + enriched roster used by both the on-screen table and the exports
+  const filteredMentees = useMemo(() => {
+    if (!scoped) return []
+    return scoped.mentees
+      .filter((s) => classFilter === 'all' || s.category === classFilter)
+      .filter((s) => matchesCategory(s.placement_status, categoryFilter))
+      .filter((s) => statusFilter === 'all' || s.placement_status === statusFilter)
+  }, [scoped, classFilter, categoryFilter, statusFilter])
+
+  const filterSummary = [
+    classFilter !== 'all' ? `Class: ${classFilter}` : 'Class: All Classes',
+    `Category: ${CATEGORY_LABELS[categoryFilter]}`,
+    `Status: ${statusFilter === 'all' ? 'All' : STATUS_LABELS[statusFilter]}`,
+  ].join(' | ')
+
+  const generatedDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'numeric', year: 'numeric' })
+
+  function tableHeaders() {
+    return ['#', 'Reg No', 'Name', 'Dept', 'Class', 'Category', 'Status', '10th%', '12th%', 'CGPA', 'Offer Type', 'Company', 'Mentor']
+  }
+
+  function tableBody() {
+    return filteredMentees.map((s, i) => {
+      const studentOffers = offersByStudent[s.id] || []
+      const primaryOffer = studentOffers.find((o) => o.is_accepted)
+      return [
+        i + 1,
+        s.register_number,
+        s.name,
+        'AIML',
+        s.category || '\u2014',
+        s.placement_status === 'higher_studies' ? 'Higher Studies' : s.placement_status === 'removed_from_placement' ? 'Entrepreneurship' : 'Placement',
+        STATUS_LABELS[s.placement_status],
+        s.tenth_percent ?? '\u2014',
+        s.twelfth_percent ?? '\u2014',
+        s.cgpa ?? '\u2014',
+        primaryOffer ? formatOfferType(primaryOffer) : '\u2014',
+        primaryOffer ? (companyMap[primaryOffer.company_id] || '\u2014') : '\u2014',
+        mentor.name,
+      ]
+    })
+  }
+
+  async function downloadPdf() {
+    const doc = new jsPDF({ orientation: 'landscape' })
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const centerX = pageWidth / 2
+    let y = 30
+
+    const logo = await loadLogo()
+    if (logo) {
+      const logoWidth = 60
+      const logoHeight = (logo.height / logo.width) * logoWidth
+      doc.addImage(logo.dataUrl, 'PNG', centerX - logoWidth / 2, y, logoWidth, logoHeight)
+      y += logoHeight + 14
+    } else {
+      y += 10
+    }
+
+    doc.setFontSize(13)
+    doc.text('SRM Institute of Science and Technology, Ramapuram', centerX, y, { align: 'center' })
+    y += 7
+    doc.setFontSize(11)
+    doc.text('Department of AIML | Batch 2026-2027', centerX, y, { align: 'center' })
+    y += 16
+
+    doc.setFontSize(20)
+    doc.setFont(undefined, 'bold')
+    doc.text('Placement Report', centerX, y, { align: 'center' })
+    doc.setFont(undefined, 'normal')
+    y += 18
+
+    const marginLeft = 20
+    doc.setFontSize(10.5)
+    doc.text(filterSummary, marginLeft, y)
+    y += 6
+    doc.text(`Date: ${generatedDate}`, marginLeft, y)
+    y += 6
+    doc.text(`Mentor: ${mentor.name} | Total Students: ${filteredMentees.length}`, marginLeft, y)
+    y += 14
+
+    autoTable(doc, {
+      startY: y,
+      head: [tableHeaders()],
+      body: tableBody(),
+      styles: { fontSize: 7.5, cellPadding: 2 },
+      headStyles: { fillColor: [16, 22, 44] },
+    })
+
+    doc.save(`${mentor.name.replace(/\s+/g, '_')}_Placement_Report_${generatedDate.replace(/\//g, '-')}.pdf`)
+  }
+
+  async function downloadDocx() {
+    const logo = await loadLogo()
+
+    const headerCells = tableHeaders().map((h) =>
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 16 })] })] })
+    )
+    const bodyRows = tableBody().map((row) =>
+      new TableRow({
+        children: row.map((cell) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(cell), size: 16 })] })] })),
+      })
+    )
+
+    const coverChildren = []
+
+    if (logo) {
+      const logoWidth = 220
+      const logoHeight = (logo.height / logo.width) * logoWidth
+      coverChildren.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [new ImageRun({ data: logo.arrayBuffer, transformation: { width: logoWidth, height: logoHeight } })],
+        })
+      )
+    }
+
+    coverChildren.push(
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: 'SRM Institute of Science and Technology, Ramapuram', size: 26 })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Department of AIML | Batch 2026-2027', size: 24 })] }),
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 400, after: 400 }, children: [new TextRun({ text: 'Placement Report', bold: true, size: 40 })] }),
+      new Paragraph({ text: filterSummary }),
+      new Paragraph({ text: `Date: ${generatedDate}` }),
+      new Paragraph({ text: `Mentor: ${mentor.name} | Total Students: ${filteredMentees.length}`, spacing: { after: 300 } }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        rows: [new TableRow({ children: headerCells }), ...bodyRows],
+      }),
+    )
+
+    const doc = new Document({
+      sections: [{
+        properties: {
+          page: {
+            size: {
+              orientation: PageOrientation.LANDSCAPE,
+              width: convertInchesToTwip(11.69),
+              height: convertInchesToTwip(8.27),
+            },
+            margin: {
+              top: convertInchesToTwip(0.4),
+              bottom: convertInchesToTwip(0.4),
+              left: convertInchesToTwip(0.4),
+              right: convertInchesToTwip(0.4),
+            },
+          },
+        },
+        children: coverChildren,
+      }],
+    })
+
+    const blob = await Packer.toBlob(doc)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${mentor.name.replace(/\s+/g, '_')}_Placement_Report_${generatedDate.replace(/\//g, '-')}.docx`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   if (loading) return <p className="state-msg">Loading mentors&hellip;</p>
   if (error) return <p className="state-msg">Couldn&rsquo;t load data: {error}</p>
@@ -169,10 +371,28 @@ export default function Mentors() {
             </div>
           </div>
 
+          <div className="filter-bar">
+            <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
+              <option value="all">All Classes</option>
+              {CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+              {Object.entries(CATEGORY_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="all">All Statuses</option>
+              {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
+            <span className="filter-bar__count">{filteredMentees.length} students</span>
+          </div>
+
           <div className="panel">
-            <div className="panel__header">
-              <h3>Student Records</h3>
-              <span>{scoped.mentees.length} students</span>
+            <div className="panel__header" style={{ background: 'var(--navy-text)' }}>
+              <h3 style={{ color: '#fff' }}>Student Records</h3>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="export-btn export-btn--pdf" onClick={downloadPdf}>Download PDF</button>
+                <button className="export-btn export-btn--docx" onClick={downloadDocx}>Download DOCX</button>
+              </div>
             </div>
             <div className="table-scroll">
               <table className="data-table">
@@ -190,7 +410,7 @@ export default function Mentors() {
                   </tr>
                 </thead>
                 <tbody>
-                  {scoped.mentees.map((s, i) => {
+                  {filteredMentees.map((s, i) => {
                     const studentOffers = offersByStudent[s.id] || []
                     const primaryOffer = studentOffers.find((o) => o.is_accepted)
                     return (
@@ -207,8 +427,8 @@ export default function Mentors() {
                       </tr>
                     )
                   })}
-                  {scoped.mentees.length === 0 && (
-                    <tr><td colSpan={9} className="state-msg">No students allocated to this mentor yet.</td></tr>
+                  {filteredMentees.length === 0 && (
+                    <tr><td colSpan={9} className="state-msg">No students match these filters.</td></tr>
                   )}
                 </tbody>
               </table>
