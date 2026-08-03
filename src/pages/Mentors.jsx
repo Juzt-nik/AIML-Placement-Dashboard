@@ -226,7 +226,7 @@ export default function Mentors() {
 
     // signature block — matches the reference template's sign-off, kept on the same
     // page as the table whenever the table itself fits on one page
-    let sigY = doc.lastAutoTable.finalY + 12
+    let sigY = doc.lastAutoTable.finalY + 28
     if (sigY > pageHeight - 15) {
       doc.addPage()
       sigY = 20
