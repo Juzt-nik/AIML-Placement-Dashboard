@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, convertInchesToTwip } from 'docx'
@@ -417,7 +418,7 @@ export default function Mentors() {
                       <tr key={s.id}>
                         <td>{i + 1}</td>
                         <td>{s.register_number}</td>
-                        <td>{s.name}</td>
+                        <td><Link to={`/students/details/${s.category}/${s.id}`} style={{ color: 'var(--blue)', fontWeight: 600 }}>{s.name}</Link></td>
                         <td>{s.category}</td>
                         <td><span className={`badge badge--${s.placement_status}`}>{STATUS_LABELS[s.placement_status]}</span></td>
                         <td>{primaryOffer ? formatOfferType(primaryOffer) : '\u2014'}</td>

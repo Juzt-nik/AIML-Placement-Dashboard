@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 
 const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
@@ -143,7 +144,7 @@ export default function Placement() {
                 return (
                   <tr key={s.id}>
                     <td>{s.register_number}</td>
-                    <td>{s.name}</td>
+                    <td><Link to={`/students/details/${s.category}/${s.id}`} style={{ color: 'var(--blue)', fontWeight: 600 }}>{s.name}</Link></td>
                     <td>{s.category}</td>
                     <td>{primaryOffer ? formatOfferType(primaryOffer) : <span className={`badge badge--${s.placement_status}`}>{STATUS_LABELS[s.placement_status]}</span>}</td>
                     {[0, 1, 2, 3, 4].map((i) => (

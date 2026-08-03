@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -122,7 +123,7 @@ export default function Requests() {
                 return (
                   <tr key={r.id}>
                     <td>{new Date(r.requested_at).toLocaleDateString('en-IN')}</td>
-                    <td>{s ? `${s.name} (${s.register_number})` : '\u2014'}</td>
+                    <td>{s ? <Link to={`/students/details/${s.category}/${s.id}`} style={{ color: 'var(--blue)', fontWeight: 600 }}>{s.name} ({s.register_number})</Link> : '\u2014'}</td>
                     <td>{requesterName(r.requested_by)}</td>
                     <td>{CHANGE_TYPE_LABELS[r.change_type] || r.change_type}</td>
                     <td>

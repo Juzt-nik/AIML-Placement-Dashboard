@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, convertInchesToTwip } from 'docx'
@@ -174,6 +175,7 @@ export default function Report() {
         ...s,
         companyName: offer ? companyMap[offer.company_id] : null,
         offerType: offer ? formatOfferType(offer) : null,
+        ctc: offer ? Number(offer.ctc).toFixed(2) : null,
         mentorName: mentorMap[s.mentor_id] || null,
       }
     })
@@ -196,7 +198,7 @@ export default function Report() {
   const generatedDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'numeric', year: 'numeric' })
 
   function tableHeaders() {
-    return ['#', 'Reg No', 'Name', 'Dept', 'Class', 'Category', 'Status', '10th%', '12th%', 'CGPA', 'Offer Type', 'Company', 'Mentor']
+    return ['#', 'Reg No', 'Name', 'Dept', 'Class', 'Category', 'Status', '10th%', '12th%', 'CGPA', 'Offer Type', 'CTC (LPA)', 'Company', 'Mentor']
   }
 
   function tableBody() {
@@ -212,6 +214,7 @@ export default function Report() {
       r.twelfth_percent ?? '\u2014',
       r.cgpa ?? '\u2014',
       r.offerType || '\u2014',
+      r.ctc ?? '\u2014',
       r.companyName || '\u2014',
       r.mentorName || '\u2014',
     ])
@@ -478,7 +481,7 @@ export default function Report() {
                   <tr key={r.id}>
                     <td>{i + 1}</td>
                     <td>{r.register_number}</td>
-                    <td>{r.name}</td>
+                    <td><Link to={`/students/details/${r.category}/${r.id}`} style={{ color: 'var(--blue)', fontWeight: 600 }}>{r.name}</Link></td>
                     <td>AIML</td>
                     <td>{r.category || '\u2014'}</td>
                     <td>{r.placement_status === 'higher_studies' ? 'Higher Studies' : r.placement_status === 'removed_from_placement' ? 'Entrepreneurship' : 'Placement'}</td>
@@ -487,12 +490,13 @@ export default function Report() {
                     <td>{r.twelfth_percent ?? '\u2014'}</td>
                     <td>{r.cgpa ?? '\u2014'}</td>
                     <td>{r.offerType || '\u2014'}</td>
+                    <td>{r.ctc ?? '\u2014'}</td>
                     <td>{r.companyName || '\u2014'}</td>
                     <td>{r.mentorName || '\u2014'}</td>
                   </tr>
                 ))}
                 {rows.length === 0 && (
-                  <tr><td colSpan={13} className="state-msg">No students match these filters.</td></tr>
+                  <tr><td colSpan={14} className="state-msg">No students match these filters.</td></tr>
                 )}
               </tbody>
             </table>
