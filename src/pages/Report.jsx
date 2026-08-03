@@ -229,16 +229,17 @@ export default function Report() {
   async function downloadPdf() {
     const doc = new jsPDF({ orientation: 'landscape' })
     const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
     const centerX = pageWidth / 2
     const marginLeft = 20
     const marginRight = pageWidth - 20
-    let y = 18
+    let y = 14
 
     const logo = await loadLogo()
     let textStartX = marginLeft
-    let headerBottom = y + 18
+    let headerBottom = y + 15
     if (logo) {
-      const logoWidth = 46
+      const logoWidth = 42
       const logoHeight = (logo.height / logo.width) * logoWidth
       doc.addImage(logo.dataUrl, 'PNG', marginLeft, y, logoWidth, logoHeight)
       textStartX = marginLeft + logoWidth + 8
@@ -247,39 +248,40 @@ export default function Report() {
 
     doc.setFontSize(13)
     doc.setFont(undefined, 'bold')
-    doc.text('SRM Institute of Science and Technology, Ramapuram', textStartX, y + 6)
+    doc.text('SRM Institute of Science and Technology, Ramapuram', textStartX, y + 5)
     doc.setFont(undefined, 'normal')
     doc.setFontSize(11)
-    doc.text('Department of Artificial Intelligence and Machine Learning', textStartX, y + 12)
-    doc.text('Batch 2026-2027', textStartX, y + 18)
-    y = headerBottom + 14
+    doc.text('Department of Artificial Intelligence and Machine Learning', textStartX, y + 10)
+    doc.text('Batch 2026-2027', textStartX, y + 15)
+    y = headerBottom + 8
 
     doc.setFontSize(20)
     doc.setFont(undefined, 'bold')
     doc.text('Placement Status Report', centerX, y, { align: 'center' })
     doc.setFont(undefined, 'normal')
-    y += 14
+    y += 12
 
     doc.setFontSize(10.5)
     doc.text(coverLine, marginLeft, y)
-    y += 6
+    y += 5
     doc.text(`Date: ${generatedDate}`, marginLeft, y)
-    y += 6
+    y += 5
     doc.text(mentorLine, marginLeft, y)
-    y += 14
+    y += 8
 
     autoTable(doc, {
       startY: y,
       head: [tableHeaders()],
       body: tableBody(),
-      styles: { fontSize: 7.5, cellPadding: 2 },
+      styles: { fontSize: 7.5, cellPadding: 1.5 },
       headStyles: { fillColor: [16, 22, 44] },
+      margin: { left: marginLeft, right: 20, bottom: 22 },
     })
 
-    // signature block — matches the reference template's sign-off
-    let sigY = doc.lastAutoTable.finalY + 26
-    const pageHeight = doc.internal.pageSize.getHeight()
-    if (sigY > pageHeight - 20) {
+    // signature block — matches the reference template's sign-off, kept on the same
+    // page as the table whenever the table itself fits on one page
+    let sigY = doc.lastAutoTable.finalY + 12
+    if (sigY > pageHeight - 15) {
       doc.addPage()
       sigY = 20
     }
