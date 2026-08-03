@@ -230,33 +230,36 @@ export default function Report() {
     const doc = new jsPDF({ orientation: 'landscape' })
     const pageWidth = doc.internal.pageSize.getWidth()
     const centerX = pageWidth / 2
-    let y = 30
+    const marginLeft = 20
+    const marginRight = pageWidth - 20
+    let y = 18
 
     const logo = await loadLogo()
+    let textStartX = marginLeft
+    let headerBottom = y + 18
     if (logo) {
-      const logoWidth = 60
+      const logoWidth = 46
       const logoHeight = (logo.height / logo.width) * logoWidth
-      doc.addImage(logo.dataUrl, 'PNG', centerX - logoWidth / 2, y, logoWidth, logoHeight)
-      y += logoHeight + 14
-    } else {
-      y += 10
+      doc.addImage(logo.dataUrl, 'PNG', marginLeft, y, logoWidth, logoHeight)
+      textStartX = marginLeft + logoWidth + 8
+      headerBottom = Math.max(headerBottom, y + logoHeight)
     }
 
     doc.setFontSize(13)
-    doc.text('SRM Institute of Science and Technology, Ramapuram', centerX, y, { align: 'center' })
-    y += 7
+    doc.setFont(undefined, 'bold')
+    doc.text('SRM Institute of Science and Technology, Ramapuram', textStartX, y + 6)
+    doc.setFont(undefined, 'normal')
     doc.setFontSize(11)
-    doc.text('Department of AIML | Batch 2026-2027', centerX, y, { align: 'center' })
-    y += 16
+    doc.text('Department of Artificial Intelligence and Machine Learning', textStartX, y + 12)
+    doc.text('Batch 2026-2027', textStartX, y + 18)
+    y = headerBottom + 14
 
     doc.setFontSize(20)
     doc.setFont(undefined, 'bold')
     doc.text('Placement Status Report', centerX, y, { align: 'center' })
     doc.setFont(undefined, 'normal')
-    y += 18
+    y += 14
 
-    const marginLeft = 20
-    const marginRight = pageWidth - 20
     doc.setFontSize(10.5)
     doc.text(coverLine, marginLeft, y)
     y += 6

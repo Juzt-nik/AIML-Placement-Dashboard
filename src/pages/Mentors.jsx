@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, convertInchesToTwip } from 'docx'
+import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, TabStopType, HorizontalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, TextWrappingSide, convertInchesToTwip } from 'docx'
 import { supabase } from '../lib/supabase'
 
 const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
@@ -176,32 +176,36 @@ export default function Mentors() {
     const doc = new jsPDF({ orientation: 'landscape' })
     const pageWidth = doc.internal.pageSize.getWidth()
     const centerX = pageWidth / 2
-    let y = 30
+    const marginLeft = 20
+    const marginRight = pageWidth - 20
+    let y = 18
 
     const logo = await loadLogo()
+    let textStartX = marginLeft
+    let headerBottom = y + 18
     if (logo) {
-      const logoWidth = 60
+      const logoWidth = 46
       const logoHeight = (logo.height / logo.width) * logoWidth
-      doc.addImage(logo.dataUrl, 'PNG', centerX - logoWidth / 2, y, logoWidth, logoHeight)
-      y += logoHeight + 14
-    } else {
-      y += 10
+      doc.addImage(logo.dataUrl, 'PNG', marginLeft, y, logoWidth, logoHeight)
+      textStartX = marginLeft + logoWidth + 8
+      headerBottom = Math.max(headerBottom, y + logoHeight)
     }
 
     doc.setFontSize(13)
-    doc.text('SRM Institute of Science and Technology, Ramapuram', centerX, y, { align: 'center' })
-    y += 7
+    doc.setFont(undefined, 'bold')
+    doc.text('SRM Institute of Science and Technology, Ramapuram', textStartX, y + 6)
+    doc.setFont(undefined, 'normal')
     doc.setFontSize(11)
-    doc.text('Department of AIML | Batch 2026-2027', centerX, y, { align: 'center' })
-    y += 16
+    doc.text('Department of Artificial Intelligence and Machine Learning', textStartX, y + 12)
+    doc.text('Batch 2026-2027', textStartX, y + 18)
+    y = headerBottom + 14
 
     doc.setFontSize(20)
     doc.setFont(undefined, 'bold')
-    doc.text('Placement Report', centerX, y, { align: 'center' })
+    doc.text('Placement Status Report', centerX, y, { align: 'center' })
     doc.setFont(undefined, 'normal')
-    y += 18
+    y += 14
 
-    const marginLeft = 20
     doc.setFontSize(10.5)
     doc.text(filterSummary, marginLeft, y)
     y += 6
@@ -218,46 +222,93 @@ export default function Mentors() {
       headStyles: { fillColor: [16, 22, 44] },
     })
 
+    // signature block — matches the reference template's sign-off
+    let sigY = doc.lastAutoTable.finalY + 26
+    const pageHeight = doc.internal.pageSize.getHeight()
+    if (sigY > pageHeight - 20) {
+      doc.addPage()
+      sigY = 20
+    }
+    doc.setFontSize(10.5)
+    doc.text('Placement Coordinator', marginLeft, sigY)
+    doc.text('Head Of The Department', marginRight, sigY, { align: 'right' })
+    sigY += 6
+    doc.text('Dept. of Artificial Intelligence and Machine Learning', marginLeft, sigY)
+    doc.text('Dept. of Artificial Intelligence and Machine Learning', marginRight, sigY, { align: 'right' })
+
     doc.save(`${mentor.name.replace(/\s+/g, '_')}_Placement_Report_${generatedDate.replace(/\//g, '-')}.pdf`)
   }
 
   async function downloadDocx() {
     const logo = await loadLogo()
+    const FONT = 'Times New Roman'
 
     const headerCells = tableHeaders().map((h) =>
-      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 16 })] })] })
+      new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, size: 16, font: FONT })] })] })
     )
     const bodyRows = tableBody().map((row) =>
       new TableRow({
-        children: row.map((cell) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(cell), size: 16 })] })] })),
+        children: row.map((cell) => new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: String(cell), size: 16, font: FONT })] })] })),
       })
     )
 
-    const coverChildren = []
+    // right-hand tab stop for the signature block, spanning the usable page width
+    const usableWidthTwips = convertInchesToTwip(11.69 - 0.8)
 
+    // first-line runs: the floating logo (docked top-left of this paragraph) followed
+    // by hand-spaced text, exactly reproducing the reference template's layout
+    const firstLineChildren = []
     if (logo) {
       const logoWidth = 220
       const logoHeight = (logo.height / logo.width) * logoWidth
-      coverChildren.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [new ImageRun({ data: logo.arrayBuffer, transformation: { width: logoWidth, height: logoHeight } })],
+      firstLineChildren.push(
+        new ImageRun({
+          data: logo.arrayBuffer,
+          transformation: { width: logoWidth, height: logoHeight },
+          floating: {
+            horizontalPosition: { relative: HorizontalPositionRelativeFrom.MARGIN, align: HorizontalPositionAlign.LEFT },
+            verticalPosition: { relative: VerticalPositionRelativeFrom.PARAGRAPH, offset: 0 },
+            wrap: { type: TextWrappingType.SQUARE, side: TextWrappingSide.BOTH_SIDES },
+            allowOverlap: true,
+          },
         })
       )
     }
+    firstLineChildren.push(
+      new TextRun({ text: '       ', size: 28, font: FONT }),
+      new TextRun({ text: 'SRM Institute of Science and Technology, Ramapuram', bold: true, size: 28, font: FONT }),
+    )
 
-    coverChildren.push(
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 200 }, children: [new TextRun({ text: 'SRM Institute of Science and Technology, Ramapuram', size: 26 })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Department of AIML | Batch 2026-2027', size: 24 })] }),
-      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 400, after: 400 }, children: [new TextRun({ text: 'Placement Report', bold: true, size: 40 })] }),
-      new Paragraph({ text: filterSummary }),
-      new Paragraph({ text: `Date: ${generatedDate}` }),
-      new Paragraph({ text: `Mentor: ${mentor.name} | Total Students: ${filteredMentees.length}`, spacing: { after: 300 } }),
+    const coverChildren = [
+      new Paragraph({ spacing: { before: 200 }, children: firstLineChildren }),
+      new Paragraph({ children: [new TextRun({ text: '    Department of Artificial Intelligence and Machine Learning', size: 28, font: FONT })] }),
+      new Paragraph({ children: [new TextRun({ text: '                          Batch 2026-2027', size: 28, font: FONT })] }),
+      new Paragraph({ text: '' }),
+      new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 400, after: 400 }, children: [new TextRun({ text: 'Placement Status Report', bold: true, size: 40, font: FONT })] }),
+      new Paragraph({ children: [new TextRun({ text: filterSummary, font: FONT })] }),
+      new Paragraph({ children: [new TextRun({ text: `Date: ${generatedDate}`, font: FONT })] }),
+      new Paragraph({ spacing: { after: 300 }, children: [new TextRun({ text: `Mentor: ${mentor.name} | Total Students: ${filteredMentees.length}`, font: FONT })] }),
       new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         rows: [new TableRow({ children: headerCells }), ...bodyRows],
       }),
-    )
+      // 30 blank spacer paragraphs push the sign-off toward the bottom of the page,
+      // matching the reference template exactly
+      ...Array.from({ length: 30 }, () => new Paragraph({ text: '' })),
+      new Paragraph({
+        tabStops: [{ type: TabStopType.RIGHT, position: usableWidthTwips }],
+        children: [new TextRun({ text: 'Placement Coordinator', font: FONT }), new TextRun('\t'), new TextRun({ text: 'Head Of The Department', font: FONT })],
+      }),
+      new Paragraph({
+        tabStops: [{ type: TabStopType.RIGHT, position: usableWidthTwips }],
+        children: [
+          new TextRun({ text: 'Dept. of Artificial Intelligence and Machine Learning', font: FONT }),
+          new TextRun('\t'),
+          new TextRun({ text: 'Dept. of Artificial Intelligence and Machine Learning', font: FONT }),
+        ],
+      }),
+      ...Array.from({ length: 5 }, () => new Paragraph({ text: '' })),
+    ]
 
     const doc = new Document({
       sections: [{
