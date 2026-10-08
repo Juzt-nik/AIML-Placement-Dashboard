@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { formatCompShort } from '../../lib/compensation'
 
 const CATEGORIES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
@@ -148,7 +149,7 @@ export default function Placement() {
                     <td>{s.category}</td>
                     <td>{primaryOffer ? formatOfferType(primaryOffer) : <span className={`badge badge--${s.placement_status}`}>{STATUS_LABELS[s.placement_status]}</span>}</td>
                     {[0, 1, 2, 3, 4].map((i) => (
-                      <td key={i}>{studentOffers[i] ? `${companyMap[studentOffers[i].company_id] || '\u2014'} (\u20b9${Number(studentOffers[i].ctc).toFixed(1)})` : '\u2014'}</td>
+                      <td key={i}>{studentOffers[i] ? `${companyMap[studentOffers[i].company_id] || '\u2014'} (${formatCompShort(studentOffers[i])})` : '\u2014'}</td>
                     ))}
                     <td>{mentorMap[s.mentor_id] || '\u2014'}</td>
                   </tr>

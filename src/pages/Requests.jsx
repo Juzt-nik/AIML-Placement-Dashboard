@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import { formatCompFromData } from '../lib/compensation'
 
 const CHANGE_TYPE_LABELS = { mark_placed: 'Mark Placed', update_details: 'Update Details' }
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
@@ -131,7 +132,7 @@ export default function Requests() {
                         <>
                           {d.company || ''}
                           {d.role ? ` \u2014 ${d.role}` : ''}
-                          {d.ctc ? ` (\u20b9${d.ctc} LPA)` : ''}
+                          {d.ctc ? ` (${formatCompFromData(d)})` : ''}
                           {d.offer_type ? `, ${d.offer_type}` : ''}
                         </>
                       ) : r.change_type === 'update_details' ? (

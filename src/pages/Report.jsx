@@ -4,6 +4,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, TabStopType, HorizontalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, TextWrappingSide, convertInchesToTwip } from 'docx'
 import { supabase } from '../lib/supabase'
+import { isStipend, isDisclosed, formatComp } from '../lib/compensation'
 
 const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
@@ -109,7 +110,7 @@ export default function Report() {
       const others = classStudents.filter((s) => s.placement_status === 'removed_from_placement')
       const eligible = classStudents.length - higherStudies.length - others.length
       const menteeIds = new Set(placed.map((s) => s.id))
-      const ctcs = offers.filter((o) => menteeIds.has(o.student_id)).map((o) => Number(o.ctc))
+      const ctcs = offers.filter((o) => menteeIds.has(o.student_id) && !isStipend(o) && isDisclosed(o.ctc)).map((o) => Number(o.ctc))
       const avgCtc = ctcs.length ? (ctcs.reduce((a, b) => a + b, 0) / ctcs.length).toFixed(2) : '\u2014'
       const pct = eligible ? ((placed.length / eligible) * 100).toFixed(1) : '0.0'
       return { cat, total: classStudents.length, placed: placed.length, higherStudies: higherStudies.length, others: others.length, pct, avgCtc }
@@ -175,7 +176,7 @@ export default function Report() {
         ...s,
         companyName: offer ? companyMap[offer.company_id] : null,
         offerType: offer ? formatOfferType(offer) : null,
-        ctc: offer ? Number(offer.ctc).toFixed(2) : null,
+        ctc: offer ? formatComp(offer, { symbol: 'Rs. ' }) : null,
         mentorName: mentorMap[s.mentor_id] || null,
       }
     })
@@ -204,7 +205,7 @@ export default function Report() {
   const generatedDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'numeric', year: 'numeric' })
 
   function tableHeaders() {
-    return ['#', 'Reg No', 'Name', 'Dept', 'Class', 'Category', 'Status', '10th%', '12th%', 'CGPA', 'CTC (LPA)', 'Offer Type', 'Company', 'Mentor']
+    return ['#', 'Reg No', 'Name', 'Dept', 'Class', 'Category', 'Status', '10th%', '12th%', 'CGPA', 'CTC / Stipend', 'Offer Type', 'Company', 'Mentor']
   }
 
   function tableBody() {

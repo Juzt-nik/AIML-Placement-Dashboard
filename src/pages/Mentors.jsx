@@ -4,6 +4,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, TextRun, WidthType, ImageRun, AlignmentType, PageOrientation, TabStopType, HorizontalPositionAlign, HorizontalPositionRelativeFrom, VerticalPositionRelativeFrom, TextWrappingType, TextWrappingSide, convertInchesToTwip } from 'docx'
 import { supabase } from '../lib/supabase'
+import { isStipend, isDisclosed, formatCompShort } from '../lib/compensation'
 
 const CLASSES = ['AIML-A', 'AIML-B', 'AIML-C', 'AIML-D']
 const STATUS_LABELS = { placed: 'Placed', not_placed: 'Not Placed', removed_from_placement: 'Entrepreneurship', higher_studies: 'Higher Studies' }
@@ -92,7 +93,7 @@ export default function Mentors() {
       const mentees = students.filter((s) => s.mentor_id === m.id)
       const placed = mentees.filter((s) => s.placement_status === 'placed')
       const menteeIds = new Set(placed.map((s) => s.id))
-      const ctcs = acceptedOffers.filter((o) => menteeIds.has(o.student_id)).map((o) => Number(o.ctc))
+      const ctcs = acceptedOffers.filter((o) => menteeIds.has(o.student_id) && !isStipend(o) && isDisclosed(o.ctc)).map((o) => Number(o.ctc))
       const avgCtc = ctcs.length ? (ctcs.reduce((a, b) => a + b, 0) / ctcs.length).toFixed(2) : '\u2014'
       const pct = mentees.length ? ((placed.length / mentees.length) * 100).toFixed(0) : '0'
       return { ...m, menteeCount: mentees.length, placedCount: placed.length, pct, avgCtc }
@@ -378,7 +379,7 @@ export default function Mentors() {
                     <div className="mentor-card__stat"><b>{m.menteeCount}</b><span>Mentees</span></div>
                     <div className="mentor-card__stat"><b>{m.placedCount}</b><span>Placed</span></div>
                     <div className="mentor-card__stat"><b>{m.pct}%</b><span>Rate</span></div>
-                    <div className="mentor-card__stat"><b>{m.avgCtc}</b><span>Avg CTC</span></div>
+                    <div className="mentor-card__stat"><b>{m.avgCtc}</b><span>Avg CTC (LPA)</span></div>
                   </div>
                 </div>
               ))}
@@ -476,7 +477,7 @@ export default function Mentors() {
                         <td><span className={`badge badge--${s.placement_status}`}>{STATUS_LABELS[s.placement_status]}</span></td>
                         <td>{primaryOffer ? formatOfferType(primaryOffer) : '\u2014'}</td>
                         {[0, 1, 2].map((idx) => (
-                          <td key={idx}>{studentOffers[idx] ? `${companyMap[studentOffers[idx].company_id] || '\u2014'} (\u20b9${Number(studentOffers[idx].ctc).toFixed(1)})` : '\u2014'}</td>
+                          <td key={idx}>{studentOffers[idx] ? `${companyMap[studentOffers[idx].company_id] || '\u2014'} (${formatCompShort(studentOffers[idx])})` : '\u2014'}</td>
                         ))}
                       </tr>
                     )

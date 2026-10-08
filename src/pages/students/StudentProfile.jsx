@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { isStipend, formatComp, formatCompFromData, compLabel } from '../../lib/compensation'
 import { useAuth } from '../../lib/AuthContext'
 
 const STATUS_LABELS = {
@@ -129,7 +130,7 @@ export default function StudentProfile() {
       return
     }
     if (!offerForm.ctc) {
-      setOfferError('CTC is required.')
+      setOfferError(isStipend({ role: offerForm.role, offer_type: offerForm.offerType }) ? 'Stipend is required.' : 'CTC is required.')
       setSavingOffer(false)
       return
     }
@@ -179,7 +180,7 @@ export default function StudentProfile() {
     setRequestError(null)
 
     if (!requestForm.company.trim() || !requestForm.ctc) {
-      setRequestError('Company and CTC are required.')
+      setRequestError(isStipend({ role: requestForm.role, offer_type: requestForm.offerType }) ? 'Company and stipend are required.' : 'Company and CTC are required.')
       setSavingRequest(false)
       return
     }
@@ -254,7 +255,7 @@ export default function StudentProfile() {
   function requestSummary(r) {
     const d = r.proposed_data || {}
     if (r.change_type === 'mark_placed') {
-      return `Placement \u2014 ${d.company || ''}${d.role ? ` (${d.role})` : ''}, \u20b9${d.ctc} LPA`
+      return `Placement \u2014 ${d.company || ''}${d.role ? ` (${d.role})` : ''}, ${formatCompFromData(d)}`
     }
     if (r.change_type === 'update_details') {
       const parts = []
@@ -411,7 +412,7 @@ export default function StudentProfile() {
                 <tr>
                   <th>Company</th>
                   <th>Role</th>
-                  <th>CTC (LPA)</th>
+                  <th>CTC / Stipend</th>
                   <th>Offer Type</th>
                   <th>Date</th>
                   <th>Accepted</th>
@@ -423,7 +424,7 @@ export default function StudentProfile() {
                   <tr key={o.id}>
                     <td>{companyMap[o.company_id] || '\u2014'}</td>
                     <td>{o.role || '\u2014'}</td>
-                    <td>{Number(o.ctc).toFixed(2)}</td>
+                    <td>{formatComp(o) || '\u2014'}</td>
                     <td>{o.offer_type ? formatOfferType(o) : '\u2014'}</td>
                     <td>{o.offer_date || '\u2014'}</td>
                     <td>{o.is_accepted ? 'Yes' : 'No'}</td>
@@ -470,8 +471,8 @@ export default function StudentProfile() {
                   </select>
                 </div>
                 <div>
-                  <label>CTC (LPA)</label>
-                  <input type="number" step="0.01" value={offerForm.ctc} onChange={(e) => setOfferForm({ ...offerForm, ctc: e.target.value })} />
+                  <label>{compLabel(offerForm.role, offerForm.offerType)}</label>
+                  <input type="number" step={isStipend({ role: offerForm.role, offer_type: offerForm.offerType }) ? '1' : '0.01'} value={offerForm.ctc} onChange={(e) => setOfferForm({ ...offerForm, ctc: e.target.value })} />
                 </div>
                 <div>
                   <label>Offer Type</label>
@@ -523,8 +524,8 @@ export default function StudentProfile() {
                     </select>
                   </div>
                   <div>
-                    <label>CTC (LPA)</label>
-                    <input type="number" step="0.01" value={requestForm.ctc} onChange={(e) => setRequestForm({ ...requestForm, ctc: e.target.value })} />
+                    <label>{compLabel(requestForm.role, requestForm.offerType)}</label>
+                    <input type="number" step={isStipend({ role: requestForm.role, offer_type: requestForm.offerType }) ? '1' : '0.01'} value={requestForm.ctc} onChange={(e) => setRequestForm({ ...requestForm, ctc: e.target.value })} />
                   </div>
                   <div>
                     <label>Offer Type</label>
