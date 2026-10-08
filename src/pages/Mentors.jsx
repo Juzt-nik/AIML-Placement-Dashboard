@@ -379,7 +379,7 @@ export default function Mentors() {
                     <div className="mentor-card__stat"><b>{m.menteeCount}</b><span>Mentees</span></div>
                     <div className="mentor-card__stat"><b>{m.placedCount}</b><span>Placed</span></div>
                     <div className="mentor-card__stat"><b>{m.pct}%</b><span>Rate</span></div>
-                    <div className="mentor-card__stat"><b>{m.avgCtc}</b><span>Avg CTC (LPA)</span></div>
+                    <div className="mentor-card__stat"><b>{m.avgCtc}</b><span>Avg CTC</span></div>
                   </div>
                 </div>
               ))}
