@@ -13,6 +13,18 @@ const NUMERIC_FIELDS = { tenth_percent: '10th %', twelfth_percent: '12th %', cgp
 const OPERATORS = { gte: '\u2265', lte: '\u2264', eq: '=' }
 const SORT_FIELDS = { name: 'Name', register_number: 'Register No', category: 'Class', tenth_percent: '10th %', twelfth_percent: '12th %', cgpa: 'CGPA' }
 const CATEGORY_LABELS = { all: 'All', placement: 'Placement', higher_studies: 'Higher Studies', others: 'Entrepreneurship' }
+const PLACEMENT_TYPE_LABELS = { marquee: 'Marquee', super_dream: 'Super Dream', dream: 'Dream', intern_normal: 'Internship (Normal)', not_mentioned: 'Not Mentioned' }
+
+// Matches a student's accepted offer against the Placement Type filter.
+// marquee / super_dream / dream match on offer type (internship or direct);
+// intern_normal is the stipend (SPM) case only; not_mentioned = offer with no disclosed salary/stipend.
+function matchesPlacementType(offer, type) {
+  if (type === 'all') return true
+  if (!offer) return false
+  if (type === 'intern_normal') return isStipend(offer)
+  if (type === 'not_mentioned') return !isDisclosed(offer.ctc)
+  return offer.offer_type === type
+}
 
 function matchesCategory(status, category) {
   if (category === 'all') return true
@@ -68,6 +80,7 @@ export default function Report() {
   const [classFilter, setClassFilter] = useState('all')
   const [reportCategory, setReportCategory] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [placementTypeFilter, setPlacementTypeFilter] = useState('all')
   const [numericFilters, setNumericFilters] = useState([])
   const [sortField, setSortField] = useState('cgpa')
   const [sortDir, setSortDir] = useState('asc')
@@ -139,7 +152,7 @@ export default function Report() {
   }
 
   function applyFilters() {
-    setApplied({ classFilter, reportCategory, statusFilter, numericFilters, sortField, sortDir })
+    setApplied({ classFilter, reportCategory, statusFilter, placementTypeFilter, numericFilters, sortField, sortDir })
   }
 
   // ----- Filtered/sorted report rows, computed only from the applied snapshot -----
@@ -149,6 +162,7 @@ export default function Report() {
       if (applied.classFilter !== 'all' && s.category !== applied.classFilter) return false
       if (!matchesCategory(s.placement_status, applied.reportCategory)) return false
       if (applied.statusFilter !== 'all' && s.placement_status !== applied.statusFilter) return false
+      if (!matchesPlacementType(offerByStudent[s.id], applied.placementTypeFilter)) return false
       for (const f of applied.numericFilters) {
         if (f.value === '' || f.value === null) continue
         const studentVal = Number(s[f.field])
@@ -187,6 +201,7 @@ export default function Report() {
     `Category: ${CATEGORY_LABELS[applied.reportCategory]}`,
     `Status: ${applied.statusFilter === 'all' ? 'All' : STATUS_LABELS[applied.statusFilter]}`,
     applied.classFilter !== 'all' ? `Class: ${applied.classFilter}` : null,
+    applied.placementTypeFilter !== 'all' ? `Placement Type: ${PLACEMENT_TYPE_LABELS[applied.placementTypeFilter]}` : null,
   ].filter(Boolean).join(' | ') : ''
 
   // matches the reference template's cover-page order: Class | Category | Status
@@ -194,7 +209,8 @@ export default function Report() {
     `Class: ${applied.classFilter === 'all' ? 'All Classes' : applied.classFilter}`,
     `Category: ${CATEGORY_LABELS[applied.reportCategory]}`,
     `Status: ${applied.statusFilter === 'all' ? 'All' : STATUS_LABELS[applied.statusFilter]}`,
-  ].join(' | ') : ''
+    applied.placementTypeFilter !== 'all' ? `Placement Type: ${PLACEMENT_TYPE_LABELS[applied.placementTypeFilter]}` : null,
+  ].filter(Boolean).join(' | ') : ''
 
   // second cover-page line: Mentor (only shown when every filtered row shares one mentor) | Total Students
   const uniqueMentors = [...new Set(rows.map((r) => r.mentorName).filter(Boolean))]
@@ -472,6 +488,13 @@ export default function Report() {
               <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="all">All</option>
                 {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </div>
+            <div>
+              <label>Placement Type</label>
+              <select value={placementTypeFilter} onChange={(e) => setPlacementTypeFilter(e.target.value)}>
+                <option value="all">All</option>
+                {Object.entries(PLACEMENT_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
             </div>
           </div>
